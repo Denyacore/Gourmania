@@ -23,10 +23,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "api.apps.ApiConfig",
+    # "api.apps.ApiConfig",
     "users.apps.UsersConfig",
     "recipes.apps.RecipesConfig",
     "colorfield",
+    "djoser",
+    "import_export",
 ]
 
 MIDDLEWARE = [

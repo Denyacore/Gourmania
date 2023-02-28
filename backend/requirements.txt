@@ -17,3 +17,4 @@ python-dotenv
 pytz==2021.1
 requests==2.26.0
 sqlparse==0.4.1
+django-import_export

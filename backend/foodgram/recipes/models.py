@@ -1,7 +1,3 @@
-from calendar import c
-from tkinter import E
-from unicodedata import name
-
 from colorfield.fields import ColorField
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -54,7 +50,7 @@ class Recipe(models.Model):
         verbose_name="Автор рецепта",
     )
     name = models.CharField(
-        max_lenght=200,
+        max_length=200,
         verbose_name="Название рецепта",
     )
     image = models.ImageField(verbose_name="Фото рецепта", blank=True, upload_to="recipes/images")
@@ -84,3 +80,70 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class IngredientsInRecipe(models.Model):
+    """
+    Промежуточная модель для связи рецептов и ингредиентов
+    """
+
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, verbose_name="Ингредиенты для рецепта")
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, verbose_name="Рецепт")
+    amount = models.FloatField(
+        default=1,
+        validators=[MinValueValidator(0.001, message="Ингредиента должно быть не менее 0.001.")],
+        verbose_name="Количество ингредиента",
+    )
+
+    class Meta:
+        default_related_name = "ingridients_in_recipe"
+        verbose_name = "Ингредиент в рецепте"
+        verbose_name_plural = "Ингредиенты в рецепте"
+        constraints = [models.UniqueConstraint(fields=["recipe", "ingredient"], name="unique_recipe")]
+
+    def __str__(self):
+        return f"{self.recipe}: {self.ingredient} – {self.amount}"
+
+
+class ShoppingCart(models.Model):
+    """
+    Модель списка покупок
+    """
+
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        default_related_name = "shopping_cart"
+        verbose_name = "Рецепт в списке покупок"
+        verbose_name_plural = "Список покупок"
+        constraints = [models.UniqueConstraint(fields=["user", "recipe"], name="unique_shopping_cart")]
+
+
+class Favorite(models.Model):
+    """
+    Модель избранных рецептов
+    """
+
+    recipe = models.ForeignKey(
+        Recipe,
+        related_name="in_favorited",
+        on_delete=models.CASCADE,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        ordering = ("user",)
+        default_related_name = "favorite"
+        verbose_name = "Избранный рецепт"
+        verbose_name_plural = "Избранное"
+        constraints = [models.UniqueConstraint(fields=["recipe", "user"], name="unique_favorite")]
