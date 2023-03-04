@@ -1,0 +1,7 @@
+Django==4.1.7
+djangorestframework==3.14.0
+djoser==2.1.0
+drf_extra_fields==3.4.1
+import_export==0.3.1
+python-dotenv==1.0.0
+requests==2.28.2
