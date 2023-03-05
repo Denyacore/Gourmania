@@ -114,8 +114,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 DJOSER = {
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        'user': 'api.v1.serializers.UsersSerializer',
-        'current_user': 'api.v1.serializers.UsersSerializer',
+        'user': 'api.serializers.UsersSerializer',
+        'current_user': 'api.serializers.UsersSerializer',
     },
     'PERMISSIONS': {
         'user_list': ['rest_framework.permissions.AllowAny'],
