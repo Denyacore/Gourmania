@@ -27,7 +27,7 @@ class UsersSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj: User):
         request = self.context.get("request")
-        if not request.user.is_anonymous:
+        if not request or request.user.is_anonymous:
             return False
         return Follow.objects.filter(user=request.user, author=obj).exists()
 
@@ -156,7 +156,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(), many=True)
     image = Base64ImageField(use_url=True, max_length=None)
     author = UserSerializer(read_only=True)
-    ingrediens = CreateIngredientsInRecipeSerializer(many=True)
+    ingredients = CreateIngredientsInRecipeSerializer(many=True)
     cooking_time = serializers.IntegerField()
 
     class Meta:
@@ -171,6 +171,32 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
+
+    @transaction.atomic
+    def create_ingredients(self, recipe, ingredients):
+        IngredientsInRecipe.objects.bulk_create([
+            IngredientsInRecipe(
+                recipe=recipe,
+                amount=ingredient['amount'],
+                ingredient=ingredient['ingredient'],
+            ) for ingredient in ingredients
+        ])
+
+    def validate(self, data):
+        ingredients = self.initial_data.get('ingredients')
+        ingredients_list = []
+        for ingredient in ingredients:
+            ingredient_id = ingredient['id']
+            if ingredient_id in ingredients_list:
+                raise ValidationError(
+                    'Есть задублированные ингредиенты!'
+                )
+            ingredients_list.append(ingredient_id)
+        if data['cooking_time'] < 1:
+            raise ValidationError(
+                'Время приготовления должно быть не менее 1 минуты!'
+            )
+        return data
 
     @transaction.atomic
     def create(self, validated_data):
@@ -192,6 +218,23 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         IngredientsInRecipe.objects.filter(recipe=recipe).delete()
         self.create_ingredients(recipe, ingredients)
         return super().update(recipe, validated_data)
+
+    def to_representation(self, instance):
+        return GetRecipeSerializer(
+            instance,
+            context={
+                'request': self.context.get('request'),
+            }
+        ).data
+
+
+class RecipeShortSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор короткой карточки рецепта
+    """
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):

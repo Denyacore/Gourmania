@@ -85,30 +85,25 @@ class UsersViewSet(UserViewSet):
 
 class RecipeViewSet(ModelViewSet):
     """
-    Вьюсет рецептов
+    Вьюсет для рецептов с добавлением/удалением из
+    избранного/списка покупок, выгрузкой списка покупок
     """
     queryset = Recipe.objects.all()
     serializer_class = GetRecipeSerializer
-    filter_backends = (DjangoFilterBackend,)
     pagination_class = RecipePagination
-    filter_class = RecipeFilter
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
     permission_classes = (
         IsAdminOrAuthorOrReadOnlyPermission, IsAuthenticatedOrReadOnly
     )
 
-    def choice_serializer_class(self):
-        """
-        Выбор сериализатора в зависимости от запроса
-        """
+    def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return GetRecipeSerializer
         return CreateRecipeSerializer
 
     @staticmethod
     def post_method_for_actions(request, pk, serializers):
-        """
-        Post запрос для создания рецепта
-        """
         data = {'user': request.user.id, 'recipe': pk}
         serializer = serializers(data=data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -134,7 +129,9 @@ class RecipeViewSet(ModelViewSet):
         return self.delete_method_for_actions(
             request=request, pk=pk, model=ShoppingCart)
 
-    @action(detail=False, methods=['get'], permission_classes=(IsAuthenticated,))
+    @action(
+        detail=False, methods=['get'], permission_classes=(IsAuthenticated,)
+    )
     def download_shopping_cart(self, request):
         return download_shopping_cart(request)
 
