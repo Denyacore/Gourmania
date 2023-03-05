@@ -152,7 +152,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     Сериализатор создания и изменения рецепта
     """
     tags = serializers.PrimaryKeyRelatedField(queryset = Tag.objects.all(),many = True)
-    image = Base64ImageField(image = Base64ImageField(use_url=True, max_length=None))
+    image = Base64ImageField(use_url=True, max_length=None)
     author = UserSerializer(read_only=True)
     ingrediens = CreateIngredientsInRecipeSerializer(many=True)
     cooking_time = serializers.IntegerField()
