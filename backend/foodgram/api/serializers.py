@@ -3,7 +3,8 @@ from re import search
 from django.db import transaction
 from djoser.serializers import UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import Favorite, Ingredient, IngredientsInRecipe, Recipe, ShoppingCart, Tag
+from recipes.models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
+                            ShoppingCart, Tag)
 from requests import request
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -26,7 +27,7 @@ class UsersSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj: User):
         request = self.context.get("request")
-        if not request.user.is_anonymous:
+        if not request or request.user.is_anonymous:
             return False
         return Follow.objects.filter(user=request.user, author=obj).exists()
 
@@ -151,15 +152,16 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     """
     Сериализатор создания и изменения рецепта
     """
-    tags = serializers.PrimaryKeyRelatedField(queryset = Tag.objects.all(),many = True)
-    image = Base64ImageField(image = Base64ImageField(use_url=True, max_length=None))
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True)
+    image = Base64ImageField(use_url=True, max_length=None)
     author = UserSerializer(read_only=True)
-    ingrediens = CreateIngredientsInRecipeSerializer(many=True)
+    ingredients = CreateIngredientsInRecipeSerializer(many=True)
     cooking_time = serializers.IntegerField()
 
     class Meta:
-        model=Recipe
-        fields=(
+        model = Recipe
+        fields = (
             'id',
             'author',
             'ingredients',
@@ -169,6 +171,32 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
+
+    @transaction.atomic
+    def create_ingredients(self, recipe, ingredients):
+        IngredientsInRecipe.objects.bulk_create([
+            IngredientsInRecipe(
+                recipe=recipe,
+                amount=ingredient['amount'],
+                ingredient=ingredient['ingredient'],
+            ) for ingredient in ingredients
+        ])
+
+    def validate(self, data):
+        ingredients = self.initial_data.get('ingredients')
+        ingredients_list = []
+        for ingredient in ingredients:
+            ingredient_id = ingredient['id']
+            if ingredient_id in ingredients_list:
+                raise ValidationError(
+                    'Есть задублированные ингредиенты!'
+                )
+            ingredients_list.append(ingredient_id)
+        if data['cooking_time'] < 1:
+            raise ValidationError(
+                'Время приготовления должно быть не менее 1 минуты!'
+            )
+        return data
 
     @transaction.atomic
     def create(self, validated_data):
@@ -190,9 +218,26 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         IngredientsInRecipe.objects.filter(recipe=recipe).delete()
         self.create_ingredients(recipe, ingredients)
         return super().update(recipe, validated_data)
-    
 
-class ShopingcartSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        return GetRecipeSerializer(
+            instance,
+            context={
+                'request': self.context.get('request'),
+            }
+        ).data
+
+
+class RecipeShortSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор короткой карточки рецепта
+    """
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
     """
     Сериализатор списка покупок
     """
@@ -204,12 +249,12 @@ class ShopingcartSerializer(serializers.ModelSerializer):
         )
         validators = UniqueTogetherValidator(
             queryset=ShoppingCart.objects.all(),
-            fields=('user','recipe'),
-            message='Рецепт уже в корзине'              
+            fields=('user', 'recipe'),
+            message='Рецепт уже в корзине'
         )
 
 
-class FavoritedSerializer(serializers.ModelSerializer):
+class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = (
@@ -218,9 +263,48 @@ class FavoritedSerializer(serializers.ModelSerializer):
         )
         validators = UniqueTogetherValidator(
             queryset=Favorite.objects.all(),
-            fields=('user','recipe'),
-            message='Рецепт уже в избранном'              
+            fields=('user', 'recipe'),
+            message='Рецепт уже в избранном'
         )
+
+
+class FollowersSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор получения подписок со списком рецептов авторов
+    """
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'is_subscribed', 'recipes', 'recipes_count'
+        )
+
+    def get_recipes_count(self, author):
+        return Recipe.objects.filter(author=author).count()
+
+    def get_recipes(self, author):
+        queryset = self.context.get('request')
+        recipes_limit = queryset.query_params.get('recipes_limit')
+        if not recipes_limit:
+            return RecipeShortSerializer(
+                Recipe.objects.filter(author=author),
+                many=True, context={'request': queryset}
+            ).data
+        return RecipeShortSerializer(
+            Recipe.objects.filter(author=author)[:int(recipes_limit)],
+            many=True,
+            context={'request': queryset}
+        ).data
+
+    def get_is_subscribed(self, author):
+        return Follow.objects.filter(
+            user=self.context.get('request').user,
+            author=author
+        ).exists()
 
 
 class FollowSerializer(serializers.ModelSerializer):

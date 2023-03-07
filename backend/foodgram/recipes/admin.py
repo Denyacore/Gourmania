@@ -2,7 +2,8 @@ from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 
-from .models import Favorite, Ingredient, IngredientsInRecipe, Recipe, ShoppingCart, Tag
+from .models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
+                     ShoppingCart, Tag)
 
 
 class IngredientsInRecipeAdmin(admin.TabularInline):
@@ -12,8 +13,7 @@ class IngredientsInRecipeAdmin(admin.TabularInline):
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     """
-    Панель админа для редактирования набора тегов рецептов со всеми
-    необходимыми полями, фильтрами и поисками
+    Панель админа для редактирования набора тегов
     """
 
     list_display = (
@@ -39,12 +39,12 @@ class IngredientResource(resources.ModelResource):
 @admin.register(Ingredient)
 class IngredientAdmin(ImportExportModelAdmin):
     """
-    Панель админа для редактирования ингредиентов со всеми необходимыми полями,
-    фильтрами, поисками и возможности экспорта/импорта ингредиентов
+    Панель админа для редактирования ингредиентов
     """
 
     resource_class = IngredientResource
     list_display = (
+        'id',
         "name",
         "measurement_unit",
     )
@@ -57,8 +57,7 @@ class IngredientAdmin(ImportExportModelAdmin):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     """
-    Панель админа для редактирования рецептов со всеми необходимыми полями,
-    фильтрами и поисками
+    Панель админа для редактирования рецептов
     """
 
     list_display = (
