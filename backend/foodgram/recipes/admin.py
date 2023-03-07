@@ -44,6 +44,7 @@ class IngredientAdmin(ImportExportModelAdmin):
 
     resource_class = IngredientResource
     list_display = (
+        'id',
         "name",
         "measurement_unit",
     )
