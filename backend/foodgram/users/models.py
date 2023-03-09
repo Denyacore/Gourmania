@@ -21,7 +21,7 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=150, verbose_name="Имя")
     last_name = models.CharField(max_length=150, verbose_name="Фамилия")
     role = models.CharField(max_length=30, choices=ROLES,
-                            default="user", verbose_name="Роль")
+                            default=USER, verbose_name="Роль")
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username", "first_name", "last_name"]
 
@@ -48,7 +48,9 @@ class Follow(models.Model):
         verbose_name="Подписчик",
     )
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="following", verbose_name="Блогер")
+        User, on_delete=models.CASCADE,
+        related_name="following",
+        verbose_name="Блогер")
 
     class Meta:
         verbose_name = "Подписка"
