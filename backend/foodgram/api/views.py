@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
@@ -103,7 +103,7 @@ class RecipeViewSet(ModelViewSet):
         return CreateRecipeSerializer
 
     @staticmethod
-    def post_method_for_actions(request, pk, serializers):
+    def __post_method_for_actions(request, pk, serializers):
         data = {'user': request.user.id, 'recipe': pk}
         serializer = serializers(data=data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -111,7 +111,7 @@ class RecipeViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @staticmethod
-    def delete_method_for_actions(request, pk, model):
+    def __delete_method_for_actions(request, pk, model):
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
         model_instance = get_object_or_404(model, user=user, recipe=recipe)
@@ -120,13 +120,13 @@ class RecipeViewSet(ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def shopping_cart(self, request, pk):
-        return self.post_method_for_actions(
+        return self.__post_method_for_actions(
             request, pk, serializers=ShoppingCartSerializer
         )
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request, pk):
-        return self.delete_method_for_actions(
+        return self.__delete_method_for_actions(
             request=request, pk=pk, model=ShoppingCart)
 
     @action(
@@ -137,10 +137,10 @@ class RecipeViewSet(ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def favorite(self, request, pk):
-        return self.post_method_for_actions(
+        return self.__post_method_for_actions(
             request=request, pk=pk, serializers=FavoriteSerializer)
 
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
-        return self.delete_method_for_actions(
+        return self.__delete_method_for_actions(
             request=request, pk=pk, model=Favorite)
