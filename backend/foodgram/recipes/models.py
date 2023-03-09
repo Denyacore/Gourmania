@@ -1,5 +1,5 @@
 from colorfield.fields import ColorField
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from users.models import User
 
@@ -8,9 +8,27 @@ class Tag(models.Model):
     """
     Модель тегов
     """
+    name_validator = RegexValidator(
+        regex=r'^[a-zA-Z0-9_]+$',
+        message='Разрешены только буквы, цифры и символ подчеркивания',
+        code='invalid_tag_name'
+    )
 
-    name = models.CharField(max_length=100, verbose_name="Название тэга")
-    color = ColorField(format="hex", verbose_name="Цветовой код")
+    color_validator = RegexValidator(
+        regex=r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
+        message='Значение должно быть в формате HEX (например, #FF0000)',
+        code='invalid_color_code'
+    )
+
+    name = models.CharField(
+        max_length=100,
+        verbose_name="Название тэга",
+        validators=name_validator
+        )
+    color = ColorField(format="hex",
+                       verbose_name="Цветовой код",
+                       validators=color_validator
+                       )
     slug = models.SlugField(verbose_name="Slug", unique=True)
 
     class Meta:
@@ -68,7 +86,7 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(
-            2, message="Время приготовления должно быть не менее 2х минут!")],
+            1, message="Время приготовления должно быть не менее 1 минуты!")],
         verbose_name="Время приготовления, мин.",
     )
     tags = models.ManyToManyField(
@@ -93,7 +111,9 @@ class IngredientsInRecipe(models.Model):
     """
 
     ingredient = models.ForeignKey(
-        Ingredient, on_delete=models.CASCADE, verbose_name="Ингредиенты для рецепта")
+        Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name="Ингредиенты для рецепта")
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE, verbose_name="Рецепт")
     amount = models.FloatField(
