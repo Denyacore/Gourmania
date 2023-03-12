@@ -26,8 +26,8 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ["username", "first_name", "last_name"]
 
     class Meta:
-        ordering = ["id"]
-        verbose_name = 'Пользователь'
+        ordering = ("id",)
+        verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
         constraints = [models.CheckConstraint(check=~models.Q(
             username__iexact="me"), name="username_is_not_me")]
