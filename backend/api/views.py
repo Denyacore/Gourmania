@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
@@ -44,12 +44,12 @@ class UsersViewSet(UserViewSet):
     """
     pagination_class = RecipePagination
 
-    @action(['get'], detail=False, permission_classes=[IsAuthenticated])
+    @action(['GET'], detail=False, permission_classes=[IsAuthenticated])
     def me(self, request, *args, **kwargs):
         self.get_object = self.get_instance
         return self.retrieve(request, *args, **kwargs)
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['GET'], detail=False)
     def subscriptions(self, request):
         subscriptions_list = self.paginate_queryset(
             User.objects.filter(following__user=request.user)
@@ -61,7 +61,7 @@ class UsersViewSet(UserViewSet):
         )
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=['post', 'delete'], detail=True)
+    @action(methods=['POST', 'DELETE'], detail=True)
     def subscribe(self, request, id):
         if request.method != 'POST':
             subscription = get_object_or_404(
@@ -103,7 +103,7 @@ class RecipeViewSet(ModelViewSet):
         return CreateRecipeSerializer
 
     @staticmethod
-    def post_method_for_actions(request, pk, serializers):
+    def __post_method_for_actions(request, pk, serializers):
         data = {'user': request.user.id, 'recipe': pk}
         serializer = serializers(data=data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -111,36 +111,36 @@ class RecipeViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @staticmethod
-    def delete_method_for_actions(request, pk, model):
+    def __delete_method_for_actions(request, pk, model):
         recipe = get_object_or_404(Recipe, id=pk)
         model_instance = get_object_or_404(
             model, user=request.user, recipe=recipe)
         model_instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['POST'])
     def shopping_cart(self, request, pk):
-        return self.post_method_for_actions(
+        return self.__post_method_for_actions(
             request, pk, serializers=ShoppingCartSerializer
         )
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request, pk):
-        return self.delete_method_for_actions(
+        return self.__delete_method_for_actions(
             request=request, pk=pk, model=ShoppingCart)
 
     @action(
-        detail=False, methods=['get'], permission_classes=(IsAuthenticated,)
+        detail=False, methods=['GET'], permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
         return download_shopping_cart(request)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['POST'])
     def favorite(self, request, pk):
-        return self.post_method_for_actions(
+        return self.__post_method_for_actions(
             request=request, pk=pk, serializers=FavoriteSerializer)
 
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
-        return self.delete_method_for_actions(
+        return self.__delete_method_for_actions(
             request=request, pk=pk, model=Favorite)
