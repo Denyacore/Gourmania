@@ -23,11 +23,11 @@ class Tag(models.Model):
     name = models.CharField(
         max_length=100,
         verbose_name="Название тэга",
-        validators=name_validator
+        validators=[name_validator]
         )
     color = ColorField(format="hex",
                        verbose_name="Цветовой код",
-                       validators=color_validator
+                       validators=[color_validator]
                        )
     slug = models.SlugField(verbose_name="Slug", unique=True)
 
