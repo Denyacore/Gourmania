@@ -43,6 +43,7 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = (
+            'id',
             'name',
             'color',
             'slug',
@@ -57,6 +58,7 @@ class IngridientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = (
+            'id',
             'name',
             'measurement_unit'
         )
@@ -271,6 +273,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShoppingCart
         field = (
+            'id',
             'user',
             'recipe',
         )
@@ -285,6 +288,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = (
+            'id',
             'user',
             'recipe',
         )
