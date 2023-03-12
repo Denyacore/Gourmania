@@ -253,6 +253,11 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
             message='Рецепт уже в корзине'
         )
 
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return RecipeShortSerializer(instance.recipe, context=context).data
+
 
 class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -266,6 +271,12 @@ class FavoriteSerializer(serializers.ModelSerializer):
             fields=('user', 'recipe'),
             message='Рецепт уже в избранном'
         )
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return RecipeShortSerializer(
+            instance.recipe, context=context).data
 
 
 class FollowersSerializer(serializers.ModelSerializer):
@@ -329,3 +340,9 @@ class FollowSerializer(serializers.ModelSerializer):
                 'Нельзя подписаться на себя'
             })
         return data
+
+    def to_representation(self, instance):
+        return FollowersSerializer(
+            instance.author,
+            context={'request': self.context.get('request')}
+        ).data
