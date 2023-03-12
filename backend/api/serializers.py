@@ -211,7 +211,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         request = self.context.get('request')
-        ingredients = validated_data.get('ingredients', [])
+        ingredients = validated_data.pop('ingredients') or []
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(
             author=request.user,
@@ -272,16 +272,16 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShoppingCart
-        field = (
+        fields = (
             'id',
             'user',
             'recipe',
         )
-        validators = UniqueTogetherValidator(
+        validators = [UniqueTogetherValidator(
             queryset=ShoppingCart.objects.all(),
             fields=('user', 'recipe'),
-            message='Рецепт уже в корзине'
-        )
+            message='Рецепт уже в корзине')
+        ]
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
@@ -292,11 +292,11 @@ class FavoriteSerializer(serializers.ModelSerializer):
             'user',
             'recipe',
         )
-        validators = UniqueTogetherValidator(
+        validators = [UniqueTogetherValidator(
             queryset=Favorite.objects.all(),
             fields=('user', 'recipe'),
-            message='Рецепт уже в избранном'
-        )
+            message='Рецепт уже в избранном')
+            ]
 
     def to_representation(self, instance):
         request = self.context.get('request')
