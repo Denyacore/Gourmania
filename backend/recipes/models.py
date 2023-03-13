@@ -9,7 +9,7 @@ class Tag(models.Model):
     Модель тегов
     """
     name_validator = RegexValidator(
-        regex=r'^[a-zA-Z0-9_]+$',
+        regex=r'^[a-zA-Z0-9_а-яА-Я]+$',
         message='Разрешены только буквы, цифры и символ подчеркивания',
         code='invalid_tag_name'
     )
