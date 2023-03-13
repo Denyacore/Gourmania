@@ -42,9 +42,9 @@ sudo docker-compose up -d
 ```
 #### Выполнить миграции, создать суперпользователя и собрать статику
 ```bash
-sudo docker-compose exec web python manage.py migrate
-sudo docker-compose exec web python manage.py createsuperuser
-sudo docker-compose exec web python manage.py collectstatic --noinput
+sudo docker-compose exec backend python manage.py migrate
+sudo docker-compose exec backend python manage.py createsuperuser
+sudo docker-compose exec backend python manage.py collectstatic --noinput
 ```
 #### Через админку импортировать ингредиенты из
 ```bash
