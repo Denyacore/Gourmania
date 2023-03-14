@@ -9,7 +9,7 @@ services:
       - ./.env
 
   backend:
-    image: dimalright/foodgram_backend:latest
+    image: denyacore/foodgram_backend:latest
     restart: always
     volumes:
       - static_value:/app/static/
@@ -20,7 +20,7 @@ services:
       - ./.env
 
   frontend:
-    image: dimalright/foodgram_frontend:latest
+    image: denyacore/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
 
